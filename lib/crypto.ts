@@ -6,16 +6,12 @@ const GCM_IV_BYTES = 12;
 export interface EncryptedEnvelope {
   /** base64: RSA-OAEP(raw AES-256 session key, serverPublicKey) */
   encryptedKey: string;
-  /** base64: 12-byte random IV for AES-GCM */
-  iv: string;
-  /** base64: AES-GCM authenticated ciphertext */
+  /** base64: iv[12] || AES-GCM ciphertext */
   payload: string;
 }
 
 export interface EncryptedResponse {
-  /** base64: fresh 12-byte IV for AES-GCM */
-  iv: string;
-  /** base64: AES-GCM authenticated ciphertext */
+  /** base64: iv[12] || AES-GCM ciphertext */
   payload: string;
 }
 
@@ -42,6 +38,21 @@ function pemToBuffer(pem: string): ArrayBuffer {
   return fromBase64(base64).buffer as ArrayBuffer;
 }
 
+function sealWithIv(iv: Uint8Array, ciphertext: ArrayBuffer): string {
+  const sealed = new Uint8Array(GCM_IV_BYTES + ciphertext.byteLength);
+  sealed.set(iv, 0);
+  sealed.set(new Uint8Array(ciphertext), GCM_IV_BYTES);
+  return toBase64(sealed);
+}
+
+function unsealWithIv(payload: string): { iv: Uint8Array<ArrayBuffer>; ciphertext: ArrayBuffer } {
+  const raw = fromBase64(payload);
+  return {
+    iv: raw.slice(0, GCM_IV_BYTES),
+    ciphertext: raw.slice(GCM_IV_BYTES).buffer as ArrayBuffer,
+  };
+}
+
 async function importPublicKey(pem: string): Promise<CryptoKey> {
   return globalThis.crypto.subtle.importKey("spki", pemToBuffer(pem), RSA_ALG, false, ["encrypt"]);
 }
@@ -64,7 +75,7 @@ async function importAesKey(raw: ArrayBuffer, usages: KeyUsage[]): Promise<Crypt
  * Client — encrypt a plaintext string for the server.
  *
  * Generates a fresh AES-GCM session key, wraps it with the server's RSA-OAEP
- * public key, and encrypts the plaintext with AES-GCM.
+ * public key, and encrypts the plaintext with AES-GCM (IV prepended to ciphertext).
  *
  * The returned `sessionKey` must be kept in memory to decrypt the server's response.
  */
@@ -82,8 +93,8 @@ export async function encryptRequest(
 
   const rawSessionKey = await globalThis.crypto.subtle.exportKey("raw", sessionKey);
   const iv = globalThis.crypto.getRandomValues(new Uint8Array(GCM_IV_BYTES));
-
   const encoded = new Uint8Array(new TextEncoder().encode(plaintext));
+
   const [encryptedKey, encryptedPayload] = await Promise.all([
     globalThis.crypto.subtle.encrypt(RSA_ALG, publicKey, rawSessionKey),
     globalThis.crypto.subtle.encrypt({ name: AES_ALG, iv }, sessionKey, encoded),
@@ -92,8 +103,7 @@ export async function encryptRequest(
   return {
     envelope: {
       encryptedKey: toBase64(encryptedKey),
-      iv: toBase64(iv),
-      payload: toBase64(encryptedPayload),
+      payload: sealWithIv(iv, encryptedPayload),
     },
     sessionKey,
   };
@@ -118,12 +128,12 @@ export async function decryptRequest(
   );
 
   const sessionKey = await importAesKey(rawSessionKey, ["decrypt", "encrypt"]);
-  const iv = fromBase64(envelope.iv);
+  const { iv, ciphertext } = unsealWithIv(envelope.payload);
 
   const decryptedBuffer = await globalThis.crypto.subtle.decrypt(
     { name: AES_ALG, iv },
     sessionKey,
-    fromBase64(envelope.payload).buffer
+    ciphertext
   );
 
   return { plaintext: new TextDecoder().decode(decryptedBuffer), sessionKey };
@@ -132,7 +142,7 @@ export async function decryptRequest(
 /**
  * Server — encrypt a response using the session key recovered from the request.
  *
- * A fresh IV is generated for each response; never reuse an IV with the same key.
+ * A fresh IV is generated for each response and prepended to the ciphertext.
  */
 export async function encryptResponse(
   plaintext: string,
@@ -141,7 +151,7 @@ export async function encryptResponse(
   const iv = globalThis.crypto.getRandomValues(new Uint8Array(GCM_IV_BYTES));
   const encoded = new Uint8Array(new TextEncoder().encode(plaintext));
   const encrypted = await globalThis.crypto.subtle.encrypt({ name: AES_ALG, iv }, sessionKey, encoded);
-  return { iv: toBase64(iv), payload: toBase64(encrypted) };
+  return { payload: sealWithIv(iv, encrypted) };
 }
 
 /**
@@ -151,11 +161,11 @@ export async function decryptResponse(
   response: EncryptedResponse,
   sessionKey: CryptoKey
 ): Promise<string> {
-  const iv = fromBase64(response.iv);
+  const { iv, ciphertext } = unsealWithIv(response.payload);
   const decrypted = await globalThis.crypto.subtle.decrypt(
     { name: AES_ALG, iv },
     sessionKey,
-    fromBase64(response.payload).buffer
+    ciphertext
   );
   return new TextDecoder().decode(decrypted);
 }
