@@ -4,9 +4,7 @@ import { decryptRequest } from "@/lib/crypto";
 import { isValidEnvelope } from "@/lib/envelope";
 
 export async function POST(request: NextRequest) {
-  if (process.env.NODE_ENV !== "development") {
-    return Response.json({ error: "Not available in production." }, { status: 404 });
-  }
+
 
   const privateKey = process.env.RSA_PRIVATE_KEY;
   if (!privateKey) {
