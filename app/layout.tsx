@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "secure enc-dec app",
-  description: "Secure encryption and decryption application sign-in.",
+  title: "Crypto Debug Portal",
+  description: "Encrypt and decrypt JSON payloads for local development.",
 };
 
 export default function RootLayout({

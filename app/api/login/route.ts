@@ -1,16 +1,11 @@
 import { type NextRequest } from "next/server";
 
-import { decryptRequest, encryptResponse, type EncryptedEnvelope } from "@/lib/crypto";
+import { decryptRequest, encryptResponse } from "@/lib/crypto";
+import { isValidEnvelope } from "@/lib/envelope";
 
 interface Credentials {
   username: string;
   password: string;
-}
-
-function isValidEnvelope(value: unknown): value is EncryptedEnvelope {
-  if (typeof value !== "object" || value === null) return false;
-  const v = value as Record<string, unknown>;
-  return typeof v.encryptedKey === "string" && typeof v.payload === "string";
 }
 
 function isCredentials(value: unknown): value is Credentials {

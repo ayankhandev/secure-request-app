@@ -1,0 +1,81 @@
+.debug-page {
+  --debug-accent: #34d399;
+  --debug-accent-dim: rgba(52, 211, 153, 0.12);
+  --debug-violet: #a78bfa;
+  --debug-amber: #fbbf24;
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(52, 211, 153, 0.14), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 50%, rgba(167, 139, 250, 0.08), transparent),
+    radial-gradient(ellipse 50% 35% at 0% 80%, rgba(251, 191, 36, 0.06), transparent),
+    #09090b;
+}
+
+.debug-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 75%);
+}
+
+.debug-glass {
+  background: rgba(9, 9, 11, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.03) inset,
+    0 24px 48px -12px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(20px);
+}
+
+.debug-tab-active {
+  box-shadow:
+    0 0 0 1px rgba(52, 211, 153, 0.35),
+    0 8px 24px -8px rgba(52, 211, 153, 0.25);
+}
+
+.debug-textarea {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.debug-textarea::placeholder {
+  color: rgba(161, 161, 170, 0.55);
+}
+
+.debug-textarea:focus {
+  outline: none;
+  border-color: rgba(52, 211, 153, 0.45);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.12);
+}
+
+.debug-pulse {
+  animation: debug-pulse 2s ease-in-out infinite;
+}
+
+@keyframes debug-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.debug-fade-in {
+  animation: debug-fade-in 0.35s ease-out both;
+}
+
+@keyframes debug-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
