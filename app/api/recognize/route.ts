@@ -125,7 +125,7 @@ Output format:
     const outputTokens = usage?.candidatesTokenCount ?? 0;
 
     const pricePerMillionInput = 0.15;
-    const pricePerMillionOutput = 0.60;
+    const pricePerMillionOutput = 0.6;
 
     const inputCost = inputTokens * (pricePerMillionInput / 1_000_000);
     const outputCost = outputTokens * (pricePerMillionOutput / 1_000_000);
@@ -133,7 +133,11 @@ Output format:
 
     return NextResponse.json({
       items,
-      cost: `$${totalCostUSD.toFixed(4)}`,
+      cost: totalCostUSD,
+      inputTokens,
+      outputTokens,
+      inputCost,
+      outputCost,
     });
   } catch (error: unknown) {
     const message =

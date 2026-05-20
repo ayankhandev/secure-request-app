@@ -12,7 +12,6 @@ interface IdentifiedItem {
 
 interface AnalysisResult {
   items: IdentifiedItem[];
-  cost: string;
 }
 
 async function analyzeImage(blob: Blob): Promise<AnalysisResult> {
@@ -86,7 +85,7 @@ export function OrnamentScanner() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
   const [items, setItems] = useState<IdentifiedItem[]>([]);
-  const [cost, setCost] = useState("");
+
   const [preview, setPreview] = useState<string | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [canStream, setCanStream] = useState(false);
@@ -110,7 +109,6 @@ export function OrnamentScanner() {
     try {
       const data = await analyzeImage(blob);
       setItems(data.items);
-      setCost(data.cost);
       setStatus("success");
       setMessage(data.items.length > 0 ? "Ornament identified successfully." : "No jewelry detected in the image.");
     } catch (err: unknown) {
@@ -204,7 +202,6 @@ export function OrnamentScanner() {
   const handleRetake = useCallback(() => {
     setPreview(null);
     setItems([]);
-    setCost("");
     setStatus("idle");
     setMessage("");
   }, []);
@@ -225,14 +222,10 @@ export function OrnamentScanner() {
               Snap &amp; Identify
             </h1>
             <p className="mt-1 max-w-xl text-sm text-zinc-500">
-              Take a photo of any ornament or jewelry — powered by Gemini Vision.
+              Take a photo of any ornament or jewelry to identify it.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              Gemini 2.0 Flash
-            </span>
             <Link
               href="/"
               className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-white/20 hover:text-white"
@@ -275,7 +268,7 @@ export function OrnamentScanner() {
               {status === "streaming"
                 ? "Position the ornament and tap capture"
                 : status === "loading"
-                  ? "Sending to Gemini for analysis…"
+                  ? "Analyzing image…"
                   : "Launch camera to capture an ornament"}
             </span>
           </div>
@@ -372,7 +365,7 @@ export function OrnamentScanner() {
             </div>
 
             <div className="flex flex-col gap-3">
-              <PanelLabel hint="Gemini Vision analysis">Identification result</PanelLabel>
+              <PanelLabel hint="AI-powered analysis">Identification result</PanelLabel>
               <div
                 className={`debug-textarea min-h-[320px] flex-1 resize-none rounded-xl border px-4 py-4 ${
                   status === "success"
@@ -394,12 +387,7 @@ export function OrnamentScanner() {
                         </div>
                       </div>
                     ))}
-                    {cost && (
-                      <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-3">
-                        <span className="text-[11px] uppercase tracking-wider text-zinc-500">API Cost</span>
-                        <span className="font-mono text-sm font-semibold text-emerald-400">{cost}</span>
-                      </div>
-                    )}
+
                   </div>
                 ) : (
                   <span className="text-zinc-600">
@@ -438,9 +426,7 @@ export function OrnamentScanner() {
         </div>
 
         <p className="mt-6 text-center text-[11px] text-zinc-600">
-          Images are sent to{" "}
-          <code className="rounded bg-white/5 px-1 py-0.5 text-zinc-500">Gemini 2.0 Flash</code>{" "}
-          for analysis. No images are stored on the server.
+          Images are analyzed securely. No images are stored on the server.
         </p>
       </main>
     </div>
