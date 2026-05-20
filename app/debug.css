@@ -79,3 +79,13 @@
     transform: translateY(0);
   }
 }
+
+.debug-spinner {
+  animation: debug-spin 0.8s linear infinite;
+}
+
+@keyframes debug-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
